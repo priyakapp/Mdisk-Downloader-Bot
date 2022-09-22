@@ -216,7 +216,7 @@ def mdiskdown(client: pyrogram.client.Client, message: pyrogram.types.messages_a
 def thumb(client: pyrogram.client.Client, message: pyrogram.types.messages_and_media.message.Message):
     
     if not checkuser(message):
-        app.send_message(message.chat.id, '__You are either not **Purchased Membership** or **Your Membership Expired**__'',reply_to_message_id=message.id)
+        app.send_message(message.chat.id, '__You are either not **Purchased Membership** or **Your Membership Expired**__',reply_to_message_id=message.id)
         return
 
     try:
