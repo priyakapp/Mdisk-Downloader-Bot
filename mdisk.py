@@ -10,13 +10,30 @@ currentFile = __file__
 realPath = os.path.realpath(currentFile)
 dirPath = os.path.dirname(realPath)
 dirName = os.path.basename(dirPath)
-ytdlp = dirPath + "/binaries/yt-dlp"
-aria2c = dirPath + "/binaries/aria2c"
-ffmpeg = dirPath + "/ffmpeg/ffmpeg"
-ffprobe = dirPath + "/ffmpeg/ffprobe"
 
-# changing permission
-os.system(f"chmod 777 {ytdlp} {aria2c} {ffmpeg} {ffprobe} ffmpeg/qt-faststart")
+# is Windows ?
+iswin = os.environ.get("WIN", "0")
+
+# binary setting
+if iswin == "0":
+    ytdlp = dirPath + "/binaries/yt-dlp"
+    aria2c = dirPath + "/binaries/aria2c"
+    ffmpeg = dirPath + "/ffmpeg/ffmpeg"
+    ffprobe = dirPath + "/ffmpeg/ffprobe"
+    os.system(f"chmod 777 {ytdlp} {aria2c} {ffmpeg} {ffprobe} ffmpeg/qt-faststart")
+else:
+    if os.path.exists("ffmpeg/ffprobe.zip"):
+        os.system("unzip ffmpeg/ffprobe.zip -d ffmpeg/")
+        os.remove("ffmpeg/ffprobe.zip")
+    if os.path.exists("ffmpeg/ffmpeg.zip"):
+        os.system("unzip ffmpeg/ffmpeg.zip -d ffmpeg/")
+        os.remove("ffmpeg/ffmpeg.zip")
+    
+    ytdlp = dirPath + "/binaries/yt-dlp.exe"
+    aria2c = dirPath + "/binaries/aria2c.exe"
+    ffmpeg = dirPath + "/ffmpeg/ffmpeg.exe"
+    ffprobe = dirPath + "/ffmpeg/ffprobe.exe"
+
 
 # header for request
 header = {
@@ -83,7 +100,12 @@ def mdow(link,message):
     subprocess.run([ytdlp, '--no-warning', '-k', '-f', vid_format, resp, '-o', input_video, '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
                    '--allow-unplayable-formats', '--external-downloader', aria2c, '--external-downloader-args', '-x 16 -s 16 -k 1M'])
     
+    # check if video downloaded
+    if not os.path.exists(input_video):
+        print("Video Not Downloaded")
+        return resp,-1,None
     print("Video Downloaded")
+    
     # renaming
     output = requests.get(url=URL, headers=header).json()['filename']
     filename = output[:1000]
@@ -146,15 +168,17 @@ def mdow(link,message):
     
 # multi-threding audio download      
 def downaud(input_audio,audids,resp):
-	threadlist = []
-	for i in range(len(audids)):
-		threadlist.append(threading.Thread(target=lambda:downaudio(input_audio,audids[i],resp),daemon=True))
-		threadlist[i].start()   
-       	
-	for ele in threadlist:
-		ele.join()   	
-       	 
-# actual audio download      
+    threadlist = []
+    for i in range(len(audids)):
+        threadlist.append(threading.Thread(target=lambda:downaudio(input_audio,audids[i],resp),daemon=True))
+        threadlist[i].start()
+    
+    for ele in threadlist:
+        ele.join()
+    
+    print("Audio Downloaded")
+    
+# actual audio download
 def downaudio(input_audio,ele,resp):             
         out_audio = input_audio + f'/aud-{ele}.m4a'
         subprocess.run([ytdlp, '--no-warning', '-k', '-f', ele, resp, '-o', out_audio, '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
@@ -171,4 +195,5 @@ def getsize(link):
         return size
     except:
         return 0
+
 
